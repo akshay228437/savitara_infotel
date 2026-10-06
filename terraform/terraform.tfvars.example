@@ -1,0 +1,42 @@
+# =============================================================================
+# CloudDocs Terraform Example Configuration
+# Copy this file to terraform.tfvars and customize for your AWS environment
+# =============================================================================
+
+project_name = "clouddocs"
+environment  = "prod"
+aws_region   = "us-east-1"
+
+# Networking Configuration
+vpc_cidr                 = "10.0.0.0/16"
+availability_zones       = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs      = ["10.0.1.0/24", "10.0.2.0/24"]
+private_app_subnet_cidrs  = ["10.0.11.0/24", "10.0.12.0/24"]
+private_db_subnet_cidrs   = ["10.0.21.0/24", "10.0.22.0/24"]
+
+# Cost optimization: set single_nat_gateway = true for dev/eval, false for strict Multi-AZ NAT HA
+single_nat_gateway = true
+
+# Database Configuration
+db_name                 = "clouddocs_db"
+db_username             = "clouddocs_admin"
+db_instance_class       = "db.t3.micro"
+db_allocated_storage    = 20
+rds_multi_az            = true
+rds_skip_final_snapshot  = true
+
+# Compute & Auto Scaling
+app_port             = 8000
+instance_type        = "t3.micro"
+asg_min_size         = 2
+asg_max_size         = 4
+asg_desired_capacity = 2
+
+# SSL/TLS ACM Certificate ARN
+# Provide your verified ACM certificate ARN to enable HTTPS listener and HTTP->HTTPS redirection:
+# certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/abcdef-1234-5678-9abc-def012345678"
+certificate_arn = ""
+
+# Logging & S3
+enable_alb_logs  = true
+force_destroy_s3 = false

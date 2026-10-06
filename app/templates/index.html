@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudDocs — Secure Corporate Document Portal</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.03); }
+    }
+    .glow-effect {
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]">
+
+  <!-- ========================================================================= -->
+  <!-- Top Navigation Bar -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo & Title -->
+        <div class="flex items-center space-x-3">
+          <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-500 shadow-lg shadow-brand-500/25">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">CloudDocs</span>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 font-semibold">Enterprise Vault</span>
+            </div>
+            <p class="text-xs text-slate-400">AWS Multi-AZ Infrastructure &bull; Automated CI/CD</p>
+          </div>
+        </div>
+
+        <!-- Infrastructure Health Status Badges -->
+        <div class="hidden md:flex items-center space-x-3">
+          <div class="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span class="font-medium">ALB:</span>
+            <span class="text-emerald-400 font-mono text-[11px]">HTTPS Active</span>
+          </div>
+
+          <div class="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="font-medium">Database:</span>
+            <span class="text-emerald-400 font-mono text-[11px]">{{ db_engine }}</span>
+          </div>
+
+          <div class="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+            <span class="font-medium">Vault:</span>
+            <span class="text-cyan-400 font-mono text-[11px]">{{ storage_info.provider }}</span>
+          </div>
+        </div>
+
+        <!-- Upload Action Trigger -->
+        <div class="flex items-center space-x-3">
+          <a href="/healthz" target="_blank" class="text-xs text-slate-400 hover:text-slate-200 transition py-1.5 px-2.5 rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-900/50 flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <span>Health API</span>
+          </a>
+
+          <button onclick="openUploadModal()" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-medium text-sm shadow-lg shadow-brand-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] border border-brand-400/30">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Upload Document</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- Main Content Container -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Environment Banner -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-brand-950/40 to-slate-900 border border-slate-800/80 p-6 shadow-xl">
+      <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Production Architecture</span>
+            <span class="text-xs text-slate-400">&bull; Region: <span class="font-mono text-slate-300">{{ aws_region }}</span></span>
+          </div>
+          <h1 class="text-2xl font-extrabold tracking-tight text-white mt-1">Enterprise Document Vault</h1>
+          <p class="text-sm text-slate-400 mt-1 max-w-2xl">
+            Secure, highly-available file repository deployed with Terraform. Files are stored in an encrypted private S3 bucket with strict IAM roles, metadata persisted in Multi-AZ RDS, credentials managed via AWS Secrets Manager.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs font-mono text-slate-300">
+          <span class="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">VPC: 10.0.0.0/16</span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">Tier: ALB &rarr; ASG &rarr; RDS</span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">SSE: AES-256</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- Metrics & Statistics Grid -->
+    <!-- ========================================================================= -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Total Documents -->
+      <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all shadow-md group">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Documents</p>
+          <div class="p-2 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20 group-hover:bg-brand-500/20 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-extrabold text-white mt-3 font-mono" id="metric-doc-count">{{ total_documents }}</p>
+        <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+          <span class="text-emerald-400">&uarr; Persistent</span> across Multi-AZ instances
+        </p>
+      </div>
+
+      <!-- Total Storage -->
+      <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all shadow-md group">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Vault Storage</p>
+          <div class="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 group-hover:bg-cyan-500/20 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7M4 7c0-2 1.5-3 3.5-3h9c2 0 3.5 1 3.5 3M4 7h16m-8 4v5m0 0l-2-2m2 2l2-2"></path></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-extrabold text-white mt-3 font-mono">{{ total_storage_formatted }}</p>
+        <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+          <span class="text-cyan-400 font-mono">{{ total_bytes }} bytes</span> total payload
+        </p>
+      </div>
+
+      <!-- Security & Encryption -->
+      <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all shadow-md group">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Encryption</p>
+          <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          </div>
+        </div>
+        <p class="text-xl font-bold text-white mt-3 flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <span>AES-256 SSE</span>
+        </p>
+        <p class="text-xs text-slate-400 mt-1">
+          Public Access: <span class="text-emerald-400 font-semibold">Blocked 100%</span>
+        </p>
+      </div>
+
+      <!-- Secrets & Identity -->
+      <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all shadow-md group">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Credentials</p>
+          <div class="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:bg-amber-500/20 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+          </div>
+        </div>
+        <p class="text-xl font-bold text-white mt-3 truncate" title="AWS Secrets Manager">Secrets Manager</p>
+        <p class="text-xs text-slate-400 mt-1">
+          Zero Hardcoded Passwords
+        </p>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- Document Management Section -->
+    <!-- ========================================================================= -->
+    <div class="bg-slate-900/70 border border-slate-800/90 rounded-2xl overflow-hidden shadow-xl">
+      
+      <!-- Toolbar: Search & Filters -->
+      <div class="p-5 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        
+        <!-- Search bar -->
+        <div class="relative flex-1 max-w-md">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+          <input 
+            type="text" 
+            id="searchInput"
+            onkeyup="filterTable()"
+            placeholder="Search by file name or uploader..." 
+            class="w-full pl-10 pr-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition"
+          >
+        </div>
+
+        <!-- Filter and Refresh -->
+        <div class="flex items-center space-x-3">
+          <select 
+            id="categoryFilter" 
+            onchange="filterTable()"
+            class="bg-slate-950/80 border border-slate-800 text-xs text-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+          >
+            <option value="ALL">All Categories</option>
+            <option value="Financial">Financial</option>
+            <option value="Legal">Legal</option>
+            <option value="Engineering">Engineering</option>
+            <option value="HR">HR</option>
+            <option value="General">General</option>
+          </select>
+
+          <button onclick="location.reload()" class="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 transition" title="Refresh list">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Table Container -->
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-sm text-slate-300" id="documentsTable">
+          <thead class="bg-slate-950/50 text-[11px] uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-800">
+            <tr>
+              <th scope="col" class="py-3.5 px-6">Document Name</th>
+              <th scope="col" class="py-3.5 px-6">Category</th>
+              <th scope="col" class="py-3.5 px-6">Size</th>
+              <th scope="col" class="py-3.5 px-6">Uploader</th>
+              <th scope="col" class="py-3.5 px-6">Uploaded At (UTC)</th>
+              <th scope="col" class="py-3.5 px-6 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60" id="tableBody">
+            {% if documents %}
+              {% for doc in documents %}
+              <tr class="hover:bg-slate-800/40 transition doc-row" data-filename="{{ doc.filename|lower }}" data-uploader="{{ doc.uploader|lower }}" data-category="{{ doc.category }}">
+                
+                <!-- File name + Icon -->
+                <td class="py-4 px-6 font-medium text-white flex items-center space-x-3">
+                  <div class="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700/60 flex items-center justify-center flex-shrink-0 text-brand-400">
+                    {% if doc.filename.endswith('.pdf') %}
+                      <span class="text-rose-400 font-bold text-xs">PDF</span>
+                    {% elif doc.filename.endswith('.docx') or doc.filename.endswith('.doc') %}
+                      <span class="text-blue-400 font-bold text-xs">DOC</span>
+                    {% elif doc.filename.endswith('.xlsx') or doc.filename.endswith('.csv') %}
+                      <span class="text-emerald-400 font-bold text-xs">XLS</span>
+                    {% elif doc.filename.endswith('.zip') or doc.filename.endswith('.tar') or doc.filename.endswith('.gz') %}
+                      <span class="text-amber-400 font-bold text-xs">ZIP</span>
+                    {% else %}
+                      <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    {% endif %}
+                  </div>
+                  <div class="truncate max-w-xs md:max-w-md">
+                    <div class="font-semibold text-slate-100 truncate" title="{{ doc.filename }}">{{ doc.filename }}</div>
+                    <div class="text-[11px] font-mono text-slate-500 truncate">{{ doc.s3_key }}</div>
+                  </div>
+                </td>
+
+                <!-- Category badge -->
+                <td class="py-4 px-6">
+                  {% if doc.category == 'Financial' %}
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Financial</span>
+                  {% elif doc.category == 'Legal' %}
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">Legal</span>
+                  {% elif doc.category == 'Engineering' %}
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Engineering</span>
+                  {% elif doc.category == 'HR' %}
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">HR</span>
+                  {% else %}
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">General</span>
+                  {% endif %}
+                </td>
+
+                <!-- Size -->
+                <td class="py-4 px-6 font-mono text-xs text-slate-300">
+                  {{ doc.formatted_size }}
+                </td>
+
+                <!-- Uploader -->
+                <td class="py-4 px-6">
+                  <div class="flex items-center space-x-2">
+                    <div class="w-6 h-6 rounded-full bg-slate-800 text-[10px] font-bold text-slate-300 flex items-center justify-center border border-slate-700">
+                      {{ doc.uploader[:1]|upper }}
+                    </div>
+                    <span class="text-xs text-slate-200">{{ doc.uploader }}</span>
+                  </div>
+                </td>
+
+                <!-- Timestamp -->
+                <td class="py-4 px-6 text-xs text-slate-400 font-mono">
+                  {{ doc.uploaded_at }}
+                </td>
+
+                <!-- Action buttons -->
+                <td class="py-4 px-6 text-right space-x-2">
+                  <a 
+                    href="/download/{{ doc.id }}" 
+                    class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 hover:text-brand-300 border border-brand-500/20 text-xs font-medium transition"
+                    title="Generate secure presigned download link"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span>Download</span>
+                  </a>
+
+                  <button 
+                    onclick="deleteDocument({{ doc.id }}, '{{ doc.filename }}')"
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                    title="Delete document"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </td>
+
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr id="emptyRow">
+                <td colspan="6" class="py-12 px-6 text-center">
+                  <div class="max-w-sm mx-auto flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400 mb-3">
+                      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <p class="text-base font-semibold text-white">No documents uploaded yet</p>
+                    <p class="text-xs text-slate-400 mt-1 mb-4">Upload your first corporate document payload to verify S3 encryption and MySQL persistence.</p>
+                    <button onclick="openUploadModal()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium text-xs shadow-md transition">
+                      Upload First File
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- Document Upload Modal -->
+  <!-- ========================================================================= -->
+  <div id="uploadModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative transform transition-all">
+      
+      <!-- Modal Close Button -->
+      <button onclick="closeUploadModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+
+      <div class="flex items-center space-x-3 mb-5">
+        <div class="p-2.5 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Upload New Document</h3>
+          <p class="text-xs text-slate-400">Streams directly into encrypted S3 bucket & records to RDS</p>
+        </div>
+      </div>
+
+      <!-- Upload Form -->
+      <form id="uploadForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+        
+        <!-- Drag & Drop Target -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Select File Payload</label>
+          <div 
+            id="dropZone"
+            onclick="document.getElementById('fileInput').click()"
+            class="border-2 border-dashed border-slate-700 hover:border-brand-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/50 hover:bg-slate-950"
+          >
+            <input type="file" id="fileInput" name="file" required class="hidden" onchange="handleFileSelect(this)">
+            <svg class="w-8 h-8 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            <p class="text-sm font-medium text-slate-200" id="fileLabel">Click to select or drag and drop file here</p>
+            <p class="text-xs text-slate-500 mt-1" id="fileSubLabel">Supports PDF, DOCX, XLSX, Images, ZIP up to 50MB</p>
+          </div>
+        </div>
+
+        <!-- Uploader & Category Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Uploader Name</label>
+            <input 
+              type="text" 
+              name="uploader" 
+              id="uploaderInput"
+              required 
+              value="DevOps Architect" 
+              class="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+            >
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Category</label>
+            <select 
+              name="category" 
+              id="categoryInput" 
+              class="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+            >
+              <option value="Financial">Financial</option>
+              <option value="Legal">Legal</option>
+              <option value="Engineering" selected>Engineering</option>
+              <option value="HR">HR</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Progress Bar (Hidden during idle) -->
+        <div id="progressContainer" class="hidden space-y-1">
+          <div class="flex justify-between text-xs text-slate-400">
+            <span>Streaming to S3...</span>
+            <span id="progressText">0%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-gradient-to-r from-brand-500 to-cyan-400 w-0 transition-all duration-200"></div>
+          </div>
+        </div>
+
+        <!-- Form Action Buttons -->
+        <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+          <button 
+            type="button" 
+            onclick="closeUploadModal()" 
+            class="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            id="submitBtn"
+            class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-brand-500/30 transition flex items-center space-x-1.5"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <span>Upload Payload</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- Toast Notification Container -->
+  <!-- ========================================================================= -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- ========================================================================= -->
+  <!-- Footer -->
+  <!-- ========================================================================= -->
+  <footer class="mt-auto border-t border-slate-800/80 bg-slate-950 py-6 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2">
+        <span class="font-semibold text-slate-300">CloudDocs Portal</span>
+        <span>&bull;</span>
+        <span>Terraform Modular Architecture</span>
+        <span>&bull;</span>
+        <span class="text-slate-400">FastAPI &bull; Boto3 &bull; PyMySQL</span>
+      </div>
+      <div class="font-mono text-slate-400 text-[11px]">
+        VPC 10.0.0.0/16 &bull; Multi-AZ (AZ-a & AZ-b) &bull; Least-Privilege IAM &bull; S3 KMS
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- Interactive Frontend Script -->
+  <!-- ========================================================================= -->
+  <script>
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-2xl border text-xs font-medium flex items-center space-x-2 transform transition-all duration-300 translate-y-4 opacity-0 ${
+        type === 'success' 
+          ? 'bg-slate-900 border-emerald-500/40 text-emerald-400' 
+          : 'bg-slate-900 border-rose-500/40 text-rose-400'
+      }`;
+      
+      const icon = type === 'success' 
+        ? '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+        : '<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+      toast.innerHTML = `${icon} <span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function openUploadModal() {
+      document.getElementById('uploadModal').classList.remove('hidden');
+    }
+
+    function closeUploadModal() {
+      document.getElementById('uploadModal').classList.add('hidden');
+      document.getElementById('uploadForm').reset();
+      document.getElementById('fileLabel').textContent = 'Click to select or drag and drop file here';
+      document.getElementById('fileSubLabel').textContent = 'Supports PDF, DOCX, XLSX, Images, ZIP up to 50MB';
+      document.getElementById('progressContainer').classList.add('hidden');
+      document.getElementById('progressBar').style.width = '0%';
+    }
+
+    function handleFileSelect(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById('fileLabel').textContent = file.name;
+        document.getElementById('fileSubLabel').textContent = (file.size / 1024).toFixed(1) + ' KB — Ready to upload';
+      }
+    }
+
+    // Drag and drop events for dropzone
+    const dropZone = document.getElementById('dropZone');
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-brand-500', 'bg-slate-900');
+      });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-brand-500', 'bg-slate-900');
+      });
+    });
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        document.getElementById('fileInput').files = files;
+        handleFileSelect(document.getElementById('fileInput'));
+      }
+    });
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const form = document.getElementById('uploadForm');
+      const formData = new FormData(form);
+      const submitBtn = document.getElementById('submitBtn');
+      const progressContainer = document.getElementById('progressContainer');
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+
+      submitBtn.disabled = true;
+      progressContainer.classList.remove('hidden');
+
+      // Simulate stream progress feedback
+      let progress = 10;
+      progressBar.style.width = '10%';
+      progressText.textContent = '10%';
+      const interval = setInterval(() => {
+        if (progress < 90) {
+          progress += 20;
+          progressBar.style.width = progress + '%';
+          progressText.textContent = progress + '%';
+        }
+      }, 150);
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        clearInterval(interval);
+        progressBar.style.width = '100%';
+        progressText.textContent = '100%';
+
+        if (response.ok) {
+          showToast('Document uploaded successfully to encrypted vault!', 'success');
+          setTimeout(() => {
+            location.reload();
+          }, 800);
+        } else {
+          const errData = await response.json();
+          showToast(errData.detail || 'Upload failed', 'error');
+          submitBtn.disabled = false;
+        }
+      } catch (err) {
+        clearInterval(interval);
+        showToast('Network error during upload', 'error');
+        submitBtn.disabled = false;
+      }
+    }
+
+    async function deleteDocument(id, filename) {
+      if (!confirm(`Are you sure you want to delete "${filename}" from the vault?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/documents/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          showToast(`Deleted ${filename}`, 'success');
+          setTimeout(() => location.reload(), 600);
+        } else {
+          showToast('Failed to delete document', 'error');
+        }
+      } catch (err) {
+        showToast('Error deleting document', 'error');
+      }
+    }
+
+    function filterTable() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const category = document.getElementById('categoryFilter').value;
+      const rows = document.querySelectorAll('.doc-row');
+
+      rows.forEach(row => {
+        const filename = row.getAttribute('data-filename') || '';
+        const uploader = row.getAttribute('data-uploader') || '';
+        const rowCategory = row.getAttribute('data-category') || '';
+
+        const matchesQuery = filename.includes(query) || uploader.includes(query);
+        const matchesCategory = (category === 'ALL' || rowCategory === category);
+
+        if (matchesQuery && matchesCategory) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
