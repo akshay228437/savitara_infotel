@@ -342,7 +342,10 @@
                   </a>
 
                   <button 
-                    onclick="deleteDocument({{ doc.id }}, '{{ doc.filename }}')"
+                    type="button"
+                    data-doc-id="{{ doc.id }}"
+                    data-doc-name="{{ doc.filename | e }}"
+                    onclick="confirmDelete(this)"
                     class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition"
                     title="Delete document"
                   >
@@ -352,6 +355,11 @@
 
               </tr>
               {% endfor %}
+              <tr id="noMatchRow" style="display: none;">
+                <td colspan="6" class="py-8 px-6 text-center text-slate-400 text-xs font-medium">
+                  No documents found matching your search or category filter.
+                </td>
+              </tr>
             {% else %}
               <tr id="emptyRow">
                 <td colspan="6" class="py-12 px-6 text-center">
@@ -539,15 +547,37 @@
     function closeUploadModal() {
       document.getElementById('uploadModal').classList.add('hidden');
       document.getElementById('uploadForm').reset();
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) fileInput.value = '';
       document.getElementById('fileLabel').textContent = 'Click to select or drag and drop file here';
       document.getElementById('fileSubLabel').textContent = 'Supports PDF, DOCX, XLSX, Images, ZIP up to 50MB';
       document.getElementById('progressContainer').classList.add('hidden');
       document.getElementById('progressBar').style.width = '0%';
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) submitBtn.disabled = false;
     }
+
+    // Close modal on Escape key press or backdrop click
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeUploadModal();
+    });
+    document.getElementById('uploadModal').addEventListener('click', (e) => {
+      if (e.target.id === 'uploadModal') closeUploadModal();
+    });
+
+    // Prevent default browser behavior when files are dropped anywhere on window
+    window.addEventListener('dragover', (e) => e.preventDefault());
+    window.addEventListener('drop', (e) => e.preventDefault());
 
     function handleFileSelect(input) {
       if (input.files && input.files[0]) {
         const file = input.files[0];
+        // 50 MB client-side threshold
+        if (file.size > 50 * 1024 * 1024) {
+          showToast('Selected file exceeds maximum 50MB limit.', 'error');
+          input.value = '';
+          return;
+        }
         document.getElementById('fileLabel').textContent = file.name;
         document.getElementById('fileSubLabel').textContent = (file.size / 1024).toFixed(1) + ' KB — Ready to upload';
       }
@@ -558,21 +588,26 @@
     ['dragenter', 'dragover'].forEach(eventName => {
       dropZone.addEventListener(eventName, (e) => {
         e.preventDefault();
+        e.stopPropagation();
         dropZone.classList.add('border-brand-500', 'bg-slate-900');
       });
     });
-    ['dragleave', 'drop'].forEach(eventName => {
+    ['dragleave'].forEach(eventName => {
       dropZone.addEventListener(eventName, (e) => {
         e.preventDefault();
+        e.stopPropagation();
         dropZone.classList.remove('border-brand-500', 'bg-slate-900');
       });
     });
     dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('border-brand-500', 'bg-slate-900');
       const dt = e.dataTransfer;
-      const files = dt.files;
-      if (files.length > 0) {
-        document.getElementById('fileInput').files = files;
-        handleFileSelect(document.getElementById('fileInput'));
+      if (dt && dt.files && dt.files.length > 0) {
+        const fileInput = document.getElementById('fileInput');
+        fileInput.files = dt.files;
+        handleFileSelect(fileInput);
       }
     });
 
@@ -588,7 +623,7 @@
       submitBtn.disabled = true;
       progressContainer.classList.remove('hidden');
 
-      // Simulate stream progress feedback
+      // Stream progress feedback simulation
       let progress = 10;
       progressBar.style.width = '10%';
       progressText.textContent = '10%';
@@ -627,6 +662,12 @@
       }
     }
 
+    function confirmDelete(button) {
+      const id = button.getAttribute('data-doc-id');
+      const filename = button.getAttribute('data-doc-name');
+      deleteDocument(id, filename);
+    }
+
     async function deleteDocument(id, filename) {
       if (!confirm(`Are you sure you want to delete "${filename}" from the vault?`)) {
         return;
@@ -652,6 +693,7 @@
       const query = document.getElementById('searchInput').value.toLowerCase();
       const category = document.getElementById('categoryFilter').value;
       const rows = document.querySelectorAll('.doc-row');
+      let visibleCount = 0;
 
       rows.forEach(row => {
         const filename = row.getAttribute('data-filename') || '';
@@ -663,10 +705,16 @@
 
         if (matchesQuery && matchesCategory) {
           row.style.display = '';
+          visibleCount++;
         } else {
           row.style.display = 'none';
         }
       });
+
+      const noMatchRow = document.getElementById('noMatchRow');
+      if (noMatchRow) {
+        noMatchRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+      }
     }
   </script>
 </body>
