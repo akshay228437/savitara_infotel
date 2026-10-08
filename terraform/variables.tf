@@ -88,7 +88,7 @@ variable "db_allocated_storage" {
 variable "rds_multi_az" {
   description = "Enable Multi-AZ deployment for RDS MySQL high availability"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "rds_skip_final_snapshot" {
@@ -115,19 +115,19 @@ variable "instance_type" {
 variable "asg_min_size" {
   description = "Minimum number of instances in the ASG"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "asg_max_size" {
   description = "Maximum number of instances in the ASG"
   type        = number
-  default     = 4
+  default     = 2
 }
 
 variable "asg_desired_capacity" {
   description = "Desired number of instances in the ASG (Multi-AZ across 2 subnets)"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "certificate_arn" {
