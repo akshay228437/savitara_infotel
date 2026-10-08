@@ -23,6 +23,7 @@
 9. [HTTPS & ACM Verification](#https--acm-verification)
 10. [Local Development & Mock Testing](#local-development--mock-testing)
 11. [CI/CD Pipeline Details](#cicd-pipeline-details)
+12. [Manual Provisioning Runbook (No Terraform)](docs/MANUAL_PROVISIONING_GUIDE.md)
 
 ---
 

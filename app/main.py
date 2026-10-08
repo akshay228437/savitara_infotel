@@ -166,7 +166,7 @@ async def dashboard(request: Request):
         "app_version": settings.APP_VERSION,
     }
 
-    return templates.TemplateResponse("index.html", context)
+    return templates.TemplateResponse(request=request, name="index.html", context=context)
 
 
 # -----------------------------------------------------------------------------
