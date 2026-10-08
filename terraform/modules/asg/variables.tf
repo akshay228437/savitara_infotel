@@ -67,23 +67,23 @@ variable "instance_type" {
 variable "root_volume_size" {
   description = "Size of the root EBS volume in GiB"
   type        = number
-  default     = 20
+  default     = 12
 }
 
 variable "min_size" {
   description = "Minimum number of instances in the ASG"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "max_size" {
   description = "Maximum number of instances in the ASG"
   type        = number
-  default     = 4
+  default     = 2
 }
 
 variable "desired_capacity" {
   description = "Desired number of instances in the ASG"
   type        = number
-  default     = 2
+  default     = 1
 }
