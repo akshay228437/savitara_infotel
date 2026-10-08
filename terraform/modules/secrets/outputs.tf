@@ -10,6 +10,6 @@ output "secret_name" {
 
 output "db_password" {
   description = "Resolved master database password"
-  value       = locals.effective_password
+  value       = var.db_password
   sensitive   = true
 }

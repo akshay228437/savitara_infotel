@@ -80,6 +80,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "documents" {
     id     = "abort-incomplete-multipart-uploads"
     status = "Enabled"
 
+    filter {} # <-- Added empty filter block
+
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
@@ -154,6 +156,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
   rule {
     id     = "expire-logs-90-days"
     status = "Enabled"
+
+    filter {} # <-- Added empty filter block
 
     expiration {
       days = 90

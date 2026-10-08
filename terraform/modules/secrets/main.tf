@@ -5,23 +5,7 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = ">= 3.0"
-    }
   }
-}
-
-# Auto-generate a secure random master password if not supplied externally
-resource "random_password" "generated_db_password" {
-  count            = var.db_password == "" ? 1 : 0
-  length           = 20
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-locals {
-  effective_password = var.db_password != "" ? var.db_password : random_password.generated_db_password[0].result
 }
 
 # AWS Secrets Manager Secret container
@@ -45,7 +29,7 @@ resource "aws_secretsmanager_secret_version" "db_credentials_version" {
     host     = var.db_host
     port     = var.db_port
     username = var.db_username
-    password = locals.effective_password
+    password = var.db_password   # <-- Directly use the input variable
     dbname   = var.db_name
   })
 }
